@@ -1,64 +1,60 @@
+
 #!/usr/bin/python3
+"""Reads from standard input and computes metrics.
 
-import sys
-import signal
+After every ten lines or the input of a keyboard interruption (CTRL + C),
+prints the following statistics:
+    - Total file size up to that point.
+    - Count of read status codes up to that point.
+"""
 
-# Initialize metrics
-total_file_size = 0
-counter = 0
-dict_sc = {
-    "200": 0,
-    "301": 0,
-    "400": 0,
-    "401": 0,
-    "403": 0,
-    "404": 0,
-    "405": 0,
-    "500": 0
-}
 
-def print_msg(dict_sc, total_file_size):
-    """
-    Method to print
+def print_stats(size, status_codes):
+    """Print accumulated metrics.
+
     Args:
-        dict_sc: dict of status codes
-        total_file_size: total of the file
-    Returns:
-        Nothing
+        size (int): The accumulated read file size.
+        status_codes (dict): The accumulated count of status codes.
     """
-    print("File size: {}".format(total_file_size))
-    for key, val in sorted(dict_sc.items()):
-        if val != 0:
-            print("{}: {}".format(key, val))
+    print("File size: {}".format(size))
+    for key in sorted(status_codes):
+        print("{}: {}".format(key, status_codes[key]))
 
-def signal_handler(sig, frame):
-    """Handle keyboard interruption (CTRL + C) and print metrics."""
-    print_msg(dict_sc, total_file_size)
-    sys.exit(0)
+if __name__ == "__main__":
+    import sys
 
-# Register the signal handler
-signal.signal(signal.SIGINT, signal_handler)
+    size = 0
+    status_codes = {}
+    valid_codes = ['200', '301', '400', '401', '403', '404', '405', '500']
+    count = 0
 
-try:
-    for line in sys.stdin:
-        parsed_line = line.split()
-        if len(parsed_line) < 7:
-            continue
+    try:
+        for line in sys.stdin:
+            if count == 10:
+                print_stats(size, status_codes)
+                count = 1
+            else:
+                count += 1
 
-        counter += 1
+            line = line.split()
 
-        try:
-            total_file_size += int(parsed_line[-1])  # file size
-            code = parsed_line[-2]  # status code
+            try:
+                size += int(line[-1])
+            except (IndexError, ValueError):
+                pass
 
-            if code in dict_sc:
-                dict_sc[code] += 1
-        except ValueError:
-            continue
+            try:
+                if line[-2] in valid_codes:
+                    if status_codes.get(line[-2], -1) == -1:
+                        status_codes[line[-2]] = 1
+                    else:
+                        status_codes[line[-2]] += 1
+            except IndexError:
+                pass
 
-        if counter == 10:
-            print_msg(dict_sc, total_file_size)
-            counter = 0
+        print_stats(size, status_codes)
 
-finally:
-    print_msg(dict_sc, total_file_size)
+    except KeyboardInterrupt:
+        print_stats(size, status_codes)
+        raise
+

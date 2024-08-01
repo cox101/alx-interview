@@ -2,7 +2,6 @@
 """N Queens"""
 import sys
 
-
 def print_board(board, n):
     """Print allocated positions to the queen"""
     b = []
@@ -13,11 +12,9 @@ def print_board(board, n):
                 b.append([i, j])
     print(b)
 
-
 def is_position_safe(board, i, j, r):
     """Checks if the position is safe for the queen"""
     return board[i] in (j, j - i + r, i - r + j)
-
 
 def safe_positions(board, row, n):
     """Find all safe positions where the queen can be allocated"""
@@ -34,11 +31,9 @@ def safe_positions(board, row, n):
                 board[row] = j
                 safe_positions(board, row + 1, n)
 
-
 def create_board(size):
     """Generates the board"""
     return [0 * size for i in range(size)]
-
 
 if len(sys.argv) != 2:
     print("Usage: nqueens N")
